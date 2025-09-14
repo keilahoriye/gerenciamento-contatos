@@ -14,11 +14,20 @@ public class ContactService {
     }
 
     public Contact buscar(int index) {
-        return contacts.get(index);
+        for (Contact c: contacts) {
+            if (c.getIndex() == index) {
+                return c;
+            }
+        }
+        return null;
     }
 
-    public void adicionar(Contact c) {
+    public boolean adicionar(Contact c) {
+        if (c.getNome() == null || c.getEmail() == null || c.getTelefone() == null) {
+            return false;
+        }
         contacts.add(c);
+        return true;
     }
 
     public void remover(int index) {
