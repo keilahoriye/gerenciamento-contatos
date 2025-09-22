@@ -2,39 +2,48 @@ package com.example.contact.Services;
 
 import com.example.contact.Models.Contact;
 import java.util.List;
+
+import com.example.contact.Repositories.ContactRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
 
 @Service
 public class ContactService {
-    private List<Contact> contacts = new ArrayList<>();
+    @Autowired
+    private ContactRepository contactRepository;
 
-    public List<Contact> listar() {
-        return contacts;
+    public List<Contact> listarContatos() {
+        return contactRepository.findAll();
     }
 
-    public Contact buscar(int index) {
-        for (Contact c: contacts) {
-            if (c.getIndex() == index) {
-                return c;
-            }
+    public Contact cadastrarContato(Contact c) {
+        return contactRepository.save(c);
+    }
+
+    public Contact buscar(Long id) {
+        return contactRepository.findById(id).orElse(null);
+    }
+
+    public void excluirContact(Long id) {
+        if (!contactRepository.existsById(id)) {
+            throw new RuntimeException("Contato não encontrado com id: " + id);
         }
-        return null;
+        contactRepository.deleteById(id);
     }
 
-    public boolean adicionar(Contact c) {
-        if (c.getNome() == null || c.getEmail() == null || c.getTelefone() == null) {
-            return false;
+    public Contact atualizarContact(Long id, Contact contactAtualizado) {
+        Contact contact = contactRepository.findById(id).orElse(null);
+        if (contact != null) {
+            contact.setNome(contactAtualizado.getNome());
+            contact.setTelefone(contactAtualizado.getTelefone());
+            contact.setEmail(contactAtualizado.getEmail());
+            contact.setIdade(contactAtualizado.getIdade());
+            contact.setDataNascimento(contactAtualizado.getDataNascimento());
+            contact.setEndereco(contactAtualizado.getEndereco()); // <-- novo campo
+            return contactRepository.save(contact);
+        } else {
+            throw new RuntimeException("Contato não encontrado com id: " + id);
         }
-        contacts.add(c);
-        return true;
     }
 
-    public void remover(int index) {
-        contacts.remove(index);
-    }
-
-    public void atualizar(int index, Contact c) {
-        contacts.set(index, c);
-    }
 }

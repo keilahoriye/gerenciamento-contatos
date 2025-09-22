@@ -2,6 +2,7 @@ package com.example.contact.Controllers;
 
 import com.example.contact.Models.Contact;
 import com.example.contact.Services.ContactService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,42 +13,51 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RestController
 @RequestMapping("/contatos")
 public class ContactController {
+    private final ContactService contactService;
 
     @Autowired
-    private ContactService contactService;
-
-    @GetMapping
-    public List<Contact> getContatos() {
-        return contactService.listar();
+    public ContactController(ContactService contactService) {
+        this.contactService = contactService;
     }
 
-    @GetMapping("/{index}")
-    public ResponseEntity<Contact> buscar(@PathVariable int index) {
-        Contact c = contactService.buscar(index);
-        if (c != null) {
-            return ResponseEntity.ok(c);
+    @GetMapping
+    public ResponseEntity<List<Contact>>listar() {
+        return ResponseEntity.ok(contactService.listarContatos());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Contact> buscar(@PathVariable Long id) {
+        Contact contato = contactService.buscar(id);
+        if (contato != null) {
+            return ResponseEntity.ok(contato);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            return ResponseEntity.notFound().build();
         }
     }
 
     @PostMapping
-    public ResponseEntity<Contact> adicionar(@RequestBody Contact contato) {
-        boolean sucesso = contactService.adicionar(contato);
-        if (!sucesso) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+    public ResponseEntity<Contact> cadastrar(@Valid @RequestBody Contact c) {
+        Contact salvo = contactService.cadastrarContato(c);
+        return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Contact> atualizar(@PathVariable Long id, @Valid @RequestBody Contact contactAtualizado) {
+        try {
+            Contact atualizado = contactService.atualizarContact(id, contactAtualizado);
+            return ResponseEntity.ok(atualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(contato);
     }
 
-    @DeleteMapping("/{index}")
-    public ResponseEntity<Void> remover(@PathVariable int index) {
-        contactService.remover(index);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{index}")
-    public void atualizar(@PathVariable int index, @RequestBody Contact c) {
-        contactService.atualizar(index, c);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> excluir(@PathVariable Long id) {
+        try {
+            contactService.excluirContact(id);
+            return ResponseEntity.ok("Contato removido com sucesso!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
